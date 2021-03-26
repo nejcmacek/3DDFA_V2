@@ -28,4 +28,3 @@ benchmark.py
 how_to_make_video_demos.txt
 
 *.pyd
-*.pyx
