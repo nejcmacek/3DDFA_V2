@@ -6,11 +6,13 @@ import sys
 import argparse
 import cv2
 import yaml
+import os
+import pathlib
 
 from FaceBoxes import FaceBoxes
 from TDDFA import TDDFA
 # from utils.render import render
-from utils.render_ctypes import render  # faster
+# from utils.render_ctypes import render  # faster
 from utils.depth import depth
 from utils.pncc import pncc
 from utils.uv import uv_tex
@@ -21,11 +23,13 @@ from utils.tddfa_util import str2bool
 
 
 def main(args):
-    cfg = yaml.load(open(args.config), Loader=yaml.SafeLoader)
+    root = pathlib.Path(__file__).parent
+    cfg = yaml.load(open(os.path.join(root, args.config)), Loader=yaml.SafeLoader)
+    cfg["checkpoint_fp"] = os.path.join(root, cfg["checkpoint_fp"])
+    cfg["bfm_fp"] = os.path.join(root, cfg["bfm_fp"])
 
     # Init FaceBoxes and TDDFA, recommend using onnx flag
     if args.onnx:
-        import os
         os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
         os.environ['OMP_NUM_THREADS'] = '4'
 
@@ -40,7 +44,7 @@ def main(args):
         face_boxes = FaceBoxes()
 
     # Given a still image path and load to BGR channel
-    img = cv2.imread(args.img_fp)
+    img = cv2.imread(os.path.join(root, args.img_fp))
 
     # Detect faces, get 3DMM params and roi boxes
     boxes = face_boxes(img)
@@ -84,7 +88,7 @@ def main(args):
         raise ValueError(f'Unknown opt {args.opt}')
 
 
-if __name__ == '__main__':
+def run_sample():
     parser = argparse.ArgumentParser(description='The demo of still image of 3DDFA_V2')
     parser.add_argument('-c', '--config', type=str, default='configs/mb1_120x120.yml')
     parser.add_argument('-f', '--img_fp', type=str, default='examples/inputs/trump_hillary.jpg')
@@ -94,5 +98,20 @@ if __name__ == '__main__':
     parser.add_argument('--show_flag', type=str2bool, default='true', help='whether to show the visualization result')
     parser.add_argument('--onnx', action='store_true', default=False)
 
-    args = parser.parse_args()
+    args = parser.parse_args(f"--onnx -o pose".split())
     main(args)
+
+
+if __name__ == '__main__':
+    # parser = argparse.ArgumentParser(description='The demo of still image of 3DDFA_V2')
+    # parser.add_argument('-c', '--config', type=str, default='configs/mb1_120x120.yml')
+    # parser.add_argument('-f', '--img_fp', type=str, default='examples/inputs/trump_hillary.jpg')
+    # parser.add_argument('-m', '--mode', type=str, default='cpu', help='gpu or cpu mode')
+    # parser.add_argument('-o', '--opt', type=str, default='2d_sparse',
+    #                     choices=['2d_sparse', '2d_dense', '3d', 'depth', 'pncc', 'uv_tex', 'pose', 'ply', 'obj'])
+    # parser.add_argument('--show_flag', type=str2bool, default='true', help='whether to show the visualization result')
+    # parser.add_argument('--onnx', action='store_true', default=False)
+
+    # args = parser.parse_args()
+    # main(args)
+    run_sample()

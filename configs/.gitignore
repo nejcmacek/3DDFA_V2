@@ -1,3 +1,5 @@
 *.pkl
 *.yml
 *.onnx
+*.pyd
+*.pyx
